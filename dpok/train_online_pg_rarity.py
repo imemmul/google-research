@@ -843,6 +843,7 @@ def _get_batch(data_iter_loader, data_iterator, prompt_list, args, accelerator):
   for i in range(len(batch)):
     batch_list.extend([batch[i] for _ in range(args.num_samples)])
   batch = batch_list
+  print(batch)
   return batch
 
 
