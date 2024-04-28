@@ -1115,6 +1115,17 @@ def main():
   reward_tokenizer = CLIPTokenizer.from_pretrained(
       "openai/clip-vit-large-patch14"
   )
+  
+  from transformers import ViTForImageClassification, ViTConfig
+  import torch.nn as nn
+  
+  if args.enable_rarity:
+    config = ViTConfig.from_pretrained('google/vit-base-patch16-224-in21k')
+    reward_rarity_model = ViTForImageClassification(config)
+    reward_rarity_model.classifier = nn.Linear(reward_rarity_model.config.hidden_size, 1)
+    reward_rarity_model.load_state_dict(torch.load(args.rarity_model_path))
+  else:
+    reward_rarity_model = None
   if args.reward_flag == 0:
     image_reward = imagereward.load("ImageReward-v1.0")
     image_reward.requires_grad_(False)
@@ -1178,6 +1189,9 @@ def main():
         model_cls=UNet2DConditionModel,
         model_config=ema_unet.config,
     )
+  
+  if args.enable_rarity:
+      reward_rarity_model.to(accelerator.device, dtype=weight_dtype)
 
   if args.enable_xformers_memory_efficient_attention:
     if is_xformers_available():
@@ -1410,6 +1424,7 @@ def main():
         tokenizer,
         weight_dtype,
         reward_clip_model,
+        reward_rarity_model,
         image_reward,
     )
   else:
