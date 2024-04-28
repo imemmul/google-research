@@ -10,7 +10,7 @@ def parse_arguments():
     parser.add_argument("--enable_weighting", action="store_true", help="Enable weighted averaging of scores.")
     parser.add_argument("--enable_mean", action="store_true", help="Enable mean calculation of scores.")
     parser.add_argument("--infer", action="store_true")
-    parser.add_argument("--generated_images_path_2", type=str, required=True, help="Paths to the generated images.")
+    parser.add_argument("--generated_images_path_2", type=str, help="Paths to the generated images.")
     return parser.parse_args()
     
 
