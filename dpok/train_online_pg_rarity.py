@@ -544,6 +544,18 @@ def parse_args():
       type=float,
       default=1e-4,
   )
+  parser.add_argument(
+    "--rarity_model_path",
+    type=str
+  )
+  parser.add_argument(
+    "--ir_weight",
+    type=float
+  )
+  parser.add_argument(
+    "--rarity_weight",
+    type=float
+  )
   args = parser.parse_args()
   env_local_rank = int(os.environ.get("LOCAL_RANK", -1))
   if env_local_rank != -1 and env_local_rank != args.local_rank:
