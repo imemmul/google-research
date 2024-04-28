@@ -681,7 +681,41 @@ def _update_output_dir(args):
     value_log = "_v_lr" + str(args.v_lr) + "_b" + str(args.v_batch_size)
     value_log += "_s" + str(args.v_step)
     args.output_dir += value_log
-  
+
+
+from torchvision.transforms import Compose, Resize, Normalize, ToTensor
+def preprocess_image_for_vit(images):
+  transform = Compose([
+      ToTensor(),
+      Resize((224, 224)),
+  ])
+  return transform(images).unsqueeze(0)
+
+
+
+def _calculate_reward_rarity(images, rarity_model):
+  processed_img = preprocess_image_for_vit(images)
+  with torch.no_grad():
+    outputs = rarity_model(processed_img.to('cuda'))
+    # probs = torch.nn.functional.sigmoid(outputs.logits)
+    # removed due to some thoughts
+    probs = outputs.logits
+    print(f"outputs value: {outputs.logits}, probs: {probs}")
+
+  return probs
+
+def _combine_rewards(blip_reward, rarity_reward, args):
+  #TODO below fucntionality is beyond discussion, please discuss and research below well, most important thing
+  if args.ir_weight and args.rarity_weight:
+    total_reward = args.ir_weight * blip_reward + args.rarity_weight * rarity_reward
+  elif args.penalization:
+    if rarity_reward > args.penalty_threshold: # 0.5
+      total_reward = blip_reward + rarity_reward
+    else:
+      total_reward = blip_reward - rarity_reward
+  return total_reward
+
+
 def _calculate_reward_ir(
     pipe,
     args,
@@ -689,6 +723,7 @@ def _calculate_reward_ir(
     tokenizer,
     weight_dtype,
     reward_clip_model,
+    reward_rarity_model,
     image_reward,
     imgs,
     prompts,
@@ -704,6 +739,15 @@ def _calculate_reward_ir(
   )
   if args.reward_filter == 1:
     blip_reward = torch.clamp(blip_reward, min=0)
+  
+  if args.enable_rarity:
+    blip_reward = blip_reward.cpu().squeeze(0).squeeze(0)
+    rarity_reward = _calculate_reward_rarity(imgs, reward_rarity_model)
+    rarity_reward = rarity_reward.cpu().squeeze(0).squeeze(0)
+    total_reward = _combine_rewards(blip_reward, rarity_reward, args)
+  else:
+    total_reward = blip_reward.cpu().squeeze(0).squeeze(0)
+  print(f"total reward value: {total_reward}")
   inputs = reward_tokenizer(
       prompts,
       max_length=tokenizer.model_max_length,
@@ -717,7 +761,7 @@ def _calculate_reward_ir(
   txt_emb = reward_clip_model.get_text_features(
       input_ids=padded_tokens.input_ids.to("cuda").unsqueeze(0)
   )
-  return blip_reward.cpu().squeeze(0).squeeze(0), txt_emb.squeeze(0)
+  return total_reward, txt_emb.squeeze(0)
 
 
 def _calculate_reward_custom(
