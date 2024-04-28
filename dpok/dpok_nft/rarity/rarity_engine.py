@@ -25,22 +25,22 @@ class RarityScore(nn.Module):
 
     def preprocess_image(self,image_path):
         image = Image.open(image_path).convert('RGB')
-        image.save("./image.png")
-        image = self.preprocess(image).unsqueeze(0).to(self.device)
-        return image
+        # image.save("./image.png")
+        image_tensor = self.preprocess(image).unsqueeze(0).to(self.device)
+        return image_tensor, image
     
     def compute_reward(self, image_path):
-        image = self.preprocess_image(image_path)
+        image, _ = self.preprocess_image(image_path)
         self.vit_model.eval()
         with torch.no_grad():
             output = self.vit_model(image)
             logits = output.logits
         probabilities = torch.nn.functional.sigmoid(logits)
         reward = probabilities.squeeze(0).squeeze(0).item()
-        print(f"{image_path}: {reward}")
+        # print(f"{image_path}: {reward}")
         self.rewards.append(reward)
 
-        return reward
+        return reward, _
     
     def normalize_reward(self):
         
