@@ -46,8 +46,10 @@ def main(vit_weights_path, generated_images_path):
     # print(generated_images)
     for image_path in generated_images:
         
-        rarity_model.compute_reward(image_path=image_path)
-        # time.sleep(0.1)
+        reward, image = rarity_model.compute_reward(image_path=image_path)
+        time.sleep(0.1)
+        if reward >= 0.5:
+            image.save("./image.png")
     
     # rarity_model.normalize_reward()
     # print(f"reward: {len(rarity_model.rewards >= 0.5)}")
