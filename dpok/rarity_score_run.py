@@ -21,8 +21,9 @@ def main(vit_weights_path, generated_images_path):
     else:
         rare_weight = 1
         not_rare_weight = 1
-        
+    
     if args.infer:
+        print("niye girmiyon")
         rarity_model = RarityScore(vit_model_weights_path=vit_weights_path,rare_weight=rare_weight,not_rare_weight=not_rare_weight)
         generated_images_1 = [os.path.join(generated_images_path, filename) 
                               for filename in os.listdir(generated_images_path) 
@@ -47,7 +48,7 @@ def main(vit_weights_path, generated_images_path):
     for image_path in generated_images:
         
         reward, image = rarity_model.compute_reward(image_path=image_path)
-        time.sleep(0.1)
+        # time.sleep(0.1)
         if reward >= 0.5:
             image.save("./image.png")
     

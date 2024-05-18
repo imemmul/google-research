@@ -35,7 +35,7 @@ class RarityScore(nn.Module):
         with torch.no_grad():
             output = self.vit_model(image)
             logits = output.logits
-        probabilities = torch.nn.functional.sigmoid(logits)
+        probabilities = torch.sigmoid(logits)
         reward = probabilities.squeeze(0).squeeze(0).item()
         # print(f"{image_path}: {reward}")
         self.rewards.append(reward)
